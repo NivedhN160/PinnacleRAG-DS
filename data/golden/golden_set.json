@@ -1,0 +1,6 @@
+[
+  {
+    "question": "What is PinnacleRAG-DS?",
+    "ground_truth": "PinnacleRAG-DS is a production-grade RAG system with hybrid retrieval, cross-encoder reranking, and RAGAS evaluation."
+  }
+]
