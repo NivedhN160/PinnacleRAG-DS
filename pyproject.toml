@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "pinnaclerag-ds"
+version = "1.0.0"
+description = "Production-grade RAG system with hybrid retrieval, cross-encoder reranking, and RAGAS evaluation — powered by Groq free-tier"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "PinnacleRAG-DS Team"},
+]
+keywords = ["rag", "retrieval-augmented-generation", "data-science", "groq", "hybrid-search"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/PinnacleRAG-DS"
+Repository = "https://github.com/yourusername/PinnacleRAG-DS"
+
+[tool.setuptools.packages.find]
+include = ["src*", "config*", "app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
