@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     """All tunable parameters for PinnacleRAG-DS."""
 
     # ── Groq LLM ──────────────────────────────────────────────────────
-    groq_api_key: str = Field(
-        ...,
-        description="Groq API key (only required secret)",
+    groq_api_key: str | None = Field(
+        default=None,
+        description="Groq API key (optional if mocking)",
     )
     groq_model: str = Field(
         default="llama-3.3-70b-versatile",

@@ -1,0 +1,1 @@
+The PinnacleRAG system is a Retrieval-Augmented Generation application. It helps answer user queries based on provided context documents, ensuring factual accuracy and reducing hallucinations.

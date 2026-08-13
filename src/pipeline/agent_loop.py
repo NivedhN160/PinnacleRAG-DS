@@ -15,8 +15,11 @@ class AgentLoop:
         self.budget_guard = budget_guard
         self.query_pipeline = query_pipeline
 
-    def run(self, query: str) -> dict:
+    def run(self, query: str, domain: str = "general") -> dict:
         self.budget_guard.check_budget()
+        
+        from src.domains import get_domain_adapter
+        adapter = get_domain_adapter(domain)
         
         # 1. Initial retrieval
         retrieved_docs = self.query_pipeline.retriever.retrieve(query, top_k=self.settings.top_k_retrieve)
@@ -43,8 +46,11 @@ class AgentLoop:
         reranked = self.query_pipeline.reranker.rerank(query, retrieved_docs, top_k=self.settings.top_k_rerank)
         
         # 3. Generate
-        gen_result = self.query_pipeline.llm.generate(query, reranked)
+        gen_result = self.query_pipeline.llm.generate(query, reranked, system_prompt=adapter.get_system_prompt())
         self.budget_guard.record_call()
+        
+        answer = adapter.post_process_answer(gen_result["answer"], reranked)
+        gen_result["answer"] = answer
         
         usage = gen_result["usage"]
         usage["budget_remaining_calls"] = self.budget_guard.get_remaining()

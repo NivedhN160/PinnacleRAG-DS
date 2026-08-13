@@ -1,0 +1,6 @@
+TICKER: AAPL
+DATE: 2025-10-31
+SECTION: 1A Risk Factors
+
+The company faces significant risks related to global supply chain disruptions. Additionally, the rapid pace of technological change means that our products may become obsolete if we fail to innovate.
+Earnings year-over-year have increased by 5%, primarily driven by services revenue.

@@ -24,8 +24,11 @@ class QueryPipeline:
         self.reranker = CrossEncoderReranker(settings)
         self.llm = GroqLLM(settings)
 
-    def run(self, query: str) -> dict:
+    def run(self, query: str, domain: str = "general") -> dict:
         self.budget_guard.check_budget()
+        
+        from src.domains import get_domain_adapter
+        adapter = get_domain_adapter(domain)
         
         # 1. Retrieve
         retrieved_docs = self.retriever.retrieve(query, top_k=self.settings.top_k_retrieve)
@@ -42,8 +45,11 @@ class QueryPipeline:
         reranked = self.reranker.rerank(query, retrieved_docs, top_k=self.settings.top_k_rerank)
         
         # 3. Generate
-        gen_result = self.llm.generate(query, reranked)
+        gen_result = self.llm.generate(query, reranked, system_prompt=adapter.get_system_prompt())
         self.budget_guard.record_call()
+        
+        answer = adapter.post_process_answer(gen_result["answer"], reranked)
+        gen_result["answer"] = answer
         
         # Add budget remaining to usage
         usage = gen_result["usage"]

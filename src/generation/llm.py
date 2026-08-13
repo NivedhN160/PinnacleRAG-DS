@@ -35,11 +35,11 @@ class GroqLLM:
             self._client = Groq(api_key=settings.groq_api_key)
             logger.info(f"Groq LLM initialized: model={self._model}")
 
-    def generate(self, query: str, context_docs: list[Document]) -> dict:
+    def generate(self, query: str, context_docs: list[Document], system_prompt: Optional[str] = None) -> dict:
         """
         Generate a grounded answer.
         """
-        messages = build_prompt(query, context_docs)
+        messages = build_prompt(query, context_docs, system_prompt=system_prompt)
         
         if self.is_mock:
             raw_response, tokens_used = self._mock_call(messages, context_docs)

@@ -17,9 +17,9 @@ agent_loop = AgentLoop(settings, budget_guard, query_pipeline)
 async def query_endpoint(request: QueryRequest):
     try:
         if request.mode == "agent":
-            result = agent_loop.run(request.question)
+            result = agent_loop.run(request.question, domain=request.domain)
         else:
-            result = query_pipeline.run(request.question)
+            result = query_pipeline.run(request.question, domain=request.domain)
             
         return result
     except HTTPException as e:

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class QueryRequest(BaseModel):
     question: str
     mode: str = Field(default="simple", description="'simple' or 'agent'")
+    domain: str = Field(default="general", description="Domain logic (general, trading, security, seo)")
 
 class Citation(BaseModel):
     id: int

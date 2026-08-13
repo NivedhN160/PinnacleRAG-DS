@@ -1,0 +1,6 @@
+INCIDENT REPORT
+DATE: 2025-11-05
+CVE-ID: CVE-2025-9999
+
+A critical vulnerability was discovered in the authentication module. Attackers can bypass 2FA under specific conditions.
+Mitigation: Immediately patch the system to version 2.4.1 and reset all active session tokens.
