@@ -1,0 +1,16 @@
+{
+  "name": "pinnaclerag-ds",
+  "version": "1.0.0",
+  "description": "Free hybrid RAG webapp",
+  "scripts": {
+    "start": "npx concurrently \"uvicorn app.main:app --reload --port 8000\" \"python -m http.server 3000 -d web\"",
+    "backend": "uvicorn app.main:app --reload --port 8000",
+    "frontend": "python -m http.server 3000 -d web"
+  },
+  "keywords": [
+    "rag",
+    "hybrid-search"
+  ],
+  "author": "",
+  "license": "MIT"
+}
