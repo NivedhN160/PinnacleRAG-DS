@@ -1,16 +1,38 @@
 'use client';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect, Suspense } from 'react';
 import ParticleCanvas from '@/components/ParticleCanvas';
 import Link from 'next/link';
 
+interface Citation {
+  id: number;
+  source: string;
+  snippet: string;
+}
+
+interface Message {
+  role: string;
+  content: string;
+  citations?: Citation[];
+}
+
 function ChatInterface() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const domain = searchParams.get('domain') || 'general';
   
-  const [messages, setMessages] = useState<{role: string, content: string}[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Upload panel state
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
+  const [file, setFile] = useState<File | null>(null);
+  const [pasteText, setPasteText] = useState('');
+  const [pasteFilename, setPasteFilename] = useState('');
+  const [uploadLoading, setUploadLoading] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,7 +62,7 @@ function ChatInterface() {
       if (!res.ok) throw new Error('Failed to fetch response');
       
       const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: data.answer, citations: data.citations }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'system', content: 'Error communicating with the backend. Is uvicorn running on port 8000?' }]);
     } finally {
@@ -48,12 +70,57 @@ function ChatInterface() {
     }
   };
 
-  const domainColors: Record<string, string> = {
-    trading: 'text-blue-400',
-    security: 'text-red-400',
-    seo: 'text-emerald-400',
-    general: 'text-slate-400'
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUploadLoading(true);
+    
+    try {
+      let res;
+      if (uploadMode === 'file' && file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('domain', domain);
+        formData.append('rebuild', 'true');
+        
+        res = await fetch('http://127.0.0.1:8000/api/ingest/upload', {
+          method: 'POST',
+          body: formData,
+        });
+      } else if (uploadMode === 'text' && pasteText && pasteFilename) {
+        res = await fetch('http://127.0.0.1:8000/api/ingest/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: pasteText,
+            filename: pasteFilename,
+            domain: domain,
+            rebuild: true
+          }),
+        });
+      }
+      
+      if (res && !res.ok) throw new Error('Upload failed');
+      
+      setMessages(prev => [...prev, { role: 'system', content: `Successfully indexed data into the ${domain} domain.` }]);
+      setShowUpload(false);
+      setFile(null);
+      setPasteText('');
+      setPasteFilename('');
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'system', content: 'Error uploading data.' }]);
+    } finally {
+      setUploadLoading(false);
+    }
   };
+
+  const domainColors: Record<string, string> = {
+    trading: 'text-blue-400 bg-blue-400/10 border-blue-400/30',
+    security: 'text-red-400 bg-red-400/10 border-red-400/30',
+    seo: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30',
+    general: 'text-slate-400 bg-slate-400/10 border-slate-400/30'
+  };
+  
+  const domains = ['general', 'trading', 'security', 'seo'];
 
   return (
     <div className="relative min-h-screen text-slate-50 font-sans flex flex-col">
@@ -63,14 +130,88 @@ function ChatInterface() {
       <header className="relative z-10 p-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-400">PinnacleRAG-DS</h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Active Domain: <span className={`font-semibold capitalize ${domainColors[domain] || 'text-slate-400'}`}>{domain}</span>
-          </p>
+          <div className="flex gap-2 mt-2">
+            {domains.map(d => (
+              <button
+                key={d}
+                onClick={() => router.push(`/chat?domain=${d}`)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold capitalize border transition-all ${
+                  domain === d ? domainColors[d] : 'border-slate-700 text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
         </div>
-        <Link href="/" className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm font-medium border border-slate-700">
-          ← Back to Hub
-        </Link>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => setShowUpload(!showUpload)}
+            className="px-4 py-2 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors text-sm font-medium border border-indigo-500/30"
+          >
+            {showUpload ? 'Close Upload' : 'Upload Data'}
+          </button>
+          <Link href="/" className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm font-medium border border-slate-700">
+            ← Back
+          </Link>
+        </div>
       </header>
+      
+      {/* Upload Panel */}
+      {showUpload && (
+        <div className="relative z-20 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex gap-4 mb-4">
+              <button 
+                onClick={() => setUploadMode('file')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${uploadMode === 'file' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+              >
+                File Upload
+              </button>
+              <button 
+                onClick={() => setUploadMode('text')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${uploadMode === 'text' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+              >
+                Paste Text
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpload} className="flex flex-col gap-4">
+              {uploadMode === 'file' ? (
+                <input 
+                  type="file" 
+                  onChange={e => setFile(e.target.files?.[0] || null)}
+                  className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white"
+                />
+              ) : (
+                <>
+                  <input 
+                    type="text"
+                    placeholder="Filename (e.g. notes.txt)"
+                    value={pasteFilename}
+                    onChange={e => setPasteFilename(e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-300"
+                  />
+                  <textarea 
+                    placeholder="Paste text here..."
+                    value={pasteText}
+                    onChange={e => setPasteText(e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-300 min-h-[120px]"
+                  />
+                </>
+              )}
+              
+              <button 
+                type="submit"
+                disabled={uploadLoading || (uploadMode === 'file' ? !file : (!pasteText || !pasteFilename))}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-medium self-end"
+              >
+                {uploadLoading ? 'Indexing...' : `Upload to ${domain} Domain`}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Chat Area */}
       <main className="relative z-10 flex-1 overflow-y-auto p-4 md:p-8 flex flex-col gap-4 max-w-4xl mx-auto w-full">
@@ -91,6 +232,21 @@ function ChatInterface() {
                   : 'bg-slate-800/80 backdrop-blur-sm border border-slate-700 text-slate-200 rounded-tl-sm'
             }`}>
               <div className="whitespace-pre-wrap">{msg.content}</div>
+              
+              {/* Citations block */}
+              {msg.citations && msg.citations.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                  <p className="text-xs font-semibold text-slate-400 mb-2">Sources:</p>
+                  <div className="flex flex-col gap-2">
+                    {msg.citations.map((c, cIdx) => (
+                      <div key={cIdx} className="text-xs bg-slate-900/50 p-2 rounded border border-slate-700/50">
+                        <span className="text-indigo-400 font-mono mr-2">[{c.id}]</span>
+                        <span className="text-slate-300 break-all">{c.source}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -14,9 +14,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config.settings import get_settings
-from src.pipeline.rag_pipeline import PinnacleRAGPipeline
+from src.pipeline.ingest_pipeline import IngestPipeline
+from src.packs.docs import DocsPack
 from src.utils.logging import setup_logging
-
 
 def main() -> None:
     """Run the full data ingestion pipeline."""
@@ -30,18 +30,25 @@ def main() -> None:
     args = parser.parse_args()
 
     settings = get_settings()
+    if args.data_path:
+        settings.raw_data_path = args.data_path
+        
     setup_logging(settings.log_level)
 
-    print("\n🔧 PinnacleRAG-DS — Data Ingestion Pipeline")
+    print("\n PinnacleRAG-DS - Data Ingestion Pipeline")
     print("=" * 50)
 
-    pipeline = PinnacleRAGPipeline(settings)
-    stats = pipeline.ingest(args.data_path)
+    ingest_pipeline = IngestPipeline(settings)
+    docs_pack = DocsPack(settings, ingest_pipeline)
+    
+    stats = docs_pack.process_directory()
 
-    print("\n📊 Ingestion Summary:")
+    print("\n Ingestion Summary:")
     print(f"  Documents loaded:      {stats.get('documents_loaded', 0)}")
-    print(f"  Documents cleaned:     {stats.get('documents_after_cleaning', 0)}")
     print(f"  Total chunks:          {stats.get('total_chunks', 0)}")
+    print(f"  Time elapsed:          {stats.get('elapsed_seconds', 0):.1f}s")
+    print(f"  Status:                {stats.get('status', 'unknown')}")
+    print()
 
     chunk_stats = stats.get("chunk_stats", {})
     if chunk_stats:

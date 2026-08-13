@@ -141,6 +141,12 @@ class RAGEvaluator:
                     "question": question,
                     "error": str(e),
                 })
+                
+            # Add delay between questions to avoid rate limits
+            if i < len(golden_set) - 1:
+                delay = getattr(self.settings, 'eval_delay_seconds', 3)
+                logger.debug(f"Sleeping for {delay} seconds before next evaluation...")
+                time.sleep(delay)
 
         elapsed = time.time() - start_time
 

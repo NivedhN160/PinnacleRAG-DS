@@ -21,15 +21,22 @@ def _get_groq_client(settings: Settings) -> Groq:
     return Groq(api_key=settings.groq_api_key)
 
 
-def _llm_judge(client: Groq, model: str, prompt: str) -> str:
-    """Call Groq as LLM judge for evaluation."""
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        max_tokens=1024,
-    )
-    return response.choices[0].message.content.strip()
+def _llm_judge(client: Groq, model: str, prompt: str, max_retries: int = 3) -> str:
+    """Call Groq as LLM judge for evaluation with retry."""
+    import time
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.0,
+                max_tokens=1024,
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep((2 ** attempt) + 1)
 
 
 def compute_faithfulness(
