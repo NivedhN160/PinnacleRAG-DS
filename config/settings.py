@@ -37,6 +37,14 @@ class Settings(BaseSettings):
         default=2048,
         description="Max tokens for LLM generation",
     )
+    max_llm_calls: int = Field(
+        default=5,
+        description="Budget guard: Max LLM calls per session",
+    )
+    mock_if_no_key: bool = Field(
+        default=True,
+        description="Mock LLM response if API key is not present",
+    )
 
     # ── Embedding Model ───────────────────────────────────────────────
     embedding_model_name: str = Field(
@@ -82,8 +90,8 @@ class Settings(BaseSettings):
         description="Path to processed/chunked data",
     )
     vectorstore_path: str = Field(
-        default=str(PROJECT_ROOT / "data" / "vectorstore"),
-        description="Path to persistent vector store",
+        default=str(PROJECT_ROOT / "data" / "index"),
+        description="Path to persistent vector store (index)",
     )
     golden_set_path: str = Field(
         default=str(PROJECT_ROOT / "data" / "golden" / "golden_set.json"),
