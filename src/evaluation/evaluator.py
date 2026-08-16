@@ -102,9 +102,10 @@ class RAGEvaluator:
 
             try:
                 # Run the pipeline
-                result = self.pipeline.query(question)
+                domain = item.get("domain", "general")
+                result = self.pipeline.run(question, domain=domain)
                 answer = result["answer"]
-                context_texts = [doc.page_content for doc in result.get("context_docs", [])]
+                context_texts = [c["snippet"] for c in result.get("citations", [])]
 
                 # Compute metrics
                 faithfulness = compute_faithfulness(answer, context_texts, question, self.settings)

@@ -27,6 +27,12 @@ def main() -> None:
         default=None,
         help="Path to raw documents directory (defaults to config setting)",
     )
+    parser.add_argument(
+        "--domain",
+        type=str,
+        default=None,
+        help="Optional domain to ingest (e.g. trading, security, seo)",
+    )
     args = parser.parse_args()
 
     settings = get_settings()
@@ -41,7 +47,12 @@ def main() -> None:
     ingest_pipeline = IngestPipeline(settings)
     docs_pack = DocsPack(settings, ingest_pipeline)
     
-    stats = docs_pack.process_directory()
+    if args.domain:
+        print(f"Ingesting domain: {args.domain}")
+        stats = docs_pack.process_domain(args.domain)
+    else:
+        print("Ingesting all documents in data path")
+        stats = docs_pack.process_directory()
 
     print("\n Ingestion Summary:")
     print(f"  Documents loaded:      {stats.get('documents_loaded', 0)}")

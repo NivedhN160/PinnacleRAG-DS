@@ -13,7 +13,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config.settings import get_settings
 from src.evaluation.evaluator import RAGEvaluator
-from src.pipeline.rag_pipeline import PinnacleRAGPipeline
+from src.pipeline.query_pipeline import QueryPipeline
+from src.pipeline.agent_loop import AgentLoop
+from src.budget.guard import BudgetGuard
 from src.utils.logging import setup_logging
 
 
@@ -46,7 +48,9 @@ def main() -> None:
     print("=" * 50)
 
     # Initialize pipeline and evaluator
-    pipeline = PinnacleRAGPipeline(settings)
+    budget_guard = BudgetGuard(settings)
+    query_pipeline = QueryPipeline(settings, budget_guard)
+    pipeline = AgentLoop(settings, budget_guard, query_pipeline)
     evaluator = RAGEvaluator(settings, pipeline)
 
     # Load golden set
