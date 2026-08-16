@@ -25,10 +25,12 @@ function ChatInterface() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+  
   // Upload panel state
   const [showUpload, setShowUpload] = useState(false);
   const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<FileList | null>(null);
   const [pasteText, setPasteText] = useState('');
   const [pasteFilename, setPasteFilename] = useState('');
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -53,7 +55,7 @@ function ChatInterface() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/query', {
+      const res = await fetch(`${apiUrl}/api/query/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: userMessage.content, mode: 'agent', domain })
@@ -76,18 +78,21 @@ function ChatInterface() {
     
     try {
       let res;
-      if (uploadMode === 'file' && file) {
+      let data;
+      if (uploadMode === 'file' && files && files.length > 0) {
         const formData = new FormData();
-        formData.append('file', file);
+        for (let i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
         formData.append('domain', domain);
         formData.append('rebuild', 'true');
         
-        res = await fetch('http://127.0.0.1:8000/api/ingest/upload', {
+        res = await fetch(`${apiUrl}/api/ingest/upload`, {
           method: 'POST',
           body: formData,
         });
       } else if (uploadMode === 'text' && pasteText && pasteFilename) {
-        res = await fetch('http://127.0.0.1:8000/api/ingest/text', {
+        res = await fetch(`${apiUrl}/api/ingest/text`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -100,10 +105,13 @@ function ChatInterface() {
       }
       
       if (res && !res.ok) throw new Error('Upload failed');
+      if (res) data = await res.json();
       
-      setMessages(prev => [...prev, { role: 'system', content: `Successfully indexed data into the ${domain} domain.` }]);
+      const stats = data?.ingest_stats;
+      const statsMsg = stats ? ` (Loaded ${stats.documents_loaded} docs into ${stats.chunks_created} chunks)` : '';
+      setMessages(prev => [...prev, { role: 'system', content: `Successfully indexed data into the ${domain} domain.${statsMsg}` }]);
       setShowUpload(false);
-      setFile(null);
+      setFiles(null);
       setPasteText('');
       setPasteFilename('');
     } catch (error) {
@@ -180,7 +188,8 @@ function ChatInterface() {
               {uploadMode === 'file' ? (
                 <input 
                   type="file" 
-                  onChange={e => setFile(e.target.files?.[0] || null)}
+                  multiple
+                  onChange={e => setFiles(e.target.files)}
                   className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white"
                 />
               ) : (
@@ -203,7 +212,7 @@ function ChatInterface() {
               
               <button 
                 type="submit"
-                disabled={uploadLoading || (uploadMode === 'file' ? !file : (!pasteText || !pasteFilename))}
+                disabled={uploadLoading || (uploadMode === 'file' ? (!files || files.length === 0) : (!pasteText || !pasteFilename))}
                 className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-medium self-end"
               >
                 {uploadLoading ? 'Indexing...' : `Upload to ${domain} Domain`}
