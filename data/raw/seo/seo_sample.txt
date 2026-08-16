@@ -1,0 +1,26 @@
+SEO Audit Report - Example Company
+====================================
+
+Technical SEO Issues
+- Missing canonical tags on 15 product pages
+- Duplicate title tags found on /blog and /blog/index
+- Page load speed: 4.2s (target: <2.5s)
+- Missing alt text on 23 images
+- Broken internal links: 7 found
+
+Keyword Gap Analysis
+- Primary keyword "enterprise software" - ranking #42 (competitor avg: #8)
+- Long-tail opportunity: "best enterprise software for small business" - no ranking
+- Content gap: No pages targeting "software comparison" queries
+
+Backlink Profile
+- Domain Authority: 34
+- Total backlinks: 1,250
+- Referring domains: 189
+- Toxic backlinks identified: 12 (recommend disavow)
+
+Content Recommendations
+- Create pillar page for "Enterprise Software Guide"
+- Update blog posts older than 12 months (47 posts)
+- Add FAQ schema to top 10 landing pages
+- Implement breadcrumb navigation site-wide

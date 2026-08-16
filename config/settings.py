@@ -122,6 +122,12 @@ class Settings(BaseSettings):
         description="Logging level",
     )
 
+    # Domain
+    default_domain: str = Field(
+        default="general",
+        description="Default domain for queries",
+    )
+
     model_config = {
         "env_file": str(PROJECT_ROOT / ".env"),
         "env_file_encoding": "utf-8",
