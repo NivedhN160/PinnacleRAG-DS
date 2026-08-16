@@ -22,23 +22,12 @@ class DocumentLoader:
     SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".md", ".docx"}
 
     def __init__(self, settings: Settings) -> None:
-        """
-        Initialize the document loader.
-
-        Args:
-            settings: Application settings.
-        """
         self.settings = settings
 
     def load_directory(self, path: str) -> list[Document]:
         """
         Load all supported documents from a directory recursively.
-
-        Args:
-            path: Directory path to scan.
-
-        Returns:
-            List of loaded Document objects with metadata.
+        Detects domain from subfolder structure: data/raw/{domain}/...
         """
         dir_path = Path(path)
         if not dir_path.exists():
@@ -60,26 +49,35 @@ class DocumentLoader:
         logger.info(f"Loaded {len(documents)} document(s) from {files_found} file(s) in {path}")
         return documents
 
+    def _detect_domain(self, file_path: Path) -> str:
+        """Detect domain from file path based on data/raw/{domain}/ structure."""
+        raw_path = Path(self.settings.raw_data_path)
+        try:
+            relative = file_path.relative_to(raw_path)
+            parts = relative.parts
+            if len(parts) > 1:
+                domain = parts[0].lower()
+                if domain in ("trading", "security", "seo", "general"):
+                    return domain
+        except (ValueError, IndexError):
+            pass
+        return "general"
+
     def load_file(self, file_path: str) -> list[Document]:
-        """
-        Load a single file with metadata.
-
-        Args:
-            file_path: Path to the file.
-
-        Returns:
-            List of Document objects (multiple pages for PDFs).
-        """
+        """Load a single file with metadata including domain."""
         path = Path(file_path)
         suffix = path.suffix.lower()
 
         if suffix not in self.SUPPORTED_EXTENSIONS:
             raise ValueError(f"Unsupported file type: {suffix}. Supported: {self.SUPPORTED_EXTENSIONS}")
 
+        domain = self._detect_domain(path)
+
         base_metadata = {
             "source": str(path),
             "filename": path.name,
             "file_type": suffix,
+            "domain": domain,
         }
 
         if suffix == ".pdf":
