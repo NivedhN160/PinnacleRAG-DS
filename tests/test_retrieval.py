@@ -56,10 +56,11 @@ class TestHybridRetriever:
     def test_build_index_empty(self, mock_settings):
         from src.retrieval.hybrid import HybridRetriever
 
-        mock_embedder = MagicMock()
-        mock_embedder.embed_documents.return_value = []
+        mock_dense = MagicMock()
+        mock_dense.retrieve.return_value = []
 
-        retriever = HybridRetriever(mock_settings, mock_embedder)
+        mock_sparse = MagicMock()
+        retriever = HybridRetriever(mock_settings, mock_dense, mock_sparse)
         retriever.build_index([])
 
         # Should not crash on empty input
@@ -67,10 +68,12 @@ class TestHybridRetriever:
     def test_retrieve_empty_index(self, mock_settings):
         from src.retrieval.hybrid import HybridRetriever
 
-        mock_embedder = MagicMock()
-        mock_embedder.embed_query.return_value = [0.1] * 384
+        mock_dense = MagicMock()
+        mock_dense.retrieve.return_value = []
 
-        retriever = HybridRetriever(mock_settings, mock_embedder)
+        mock_sparse = MagicMock()
+        mock_sparse.retrieve.return_value = []
+        retriever = HybridRetriever(mock_settings, mock_dense, mock_sparse)
         results = retriever.retrieve("test query")
 
         assert results == []
@@ -78,14 +81,12 @@ class TestHybridRetriever:
     def test_build_and_retrieve(self, mock_settings, sample_chunks):
         from src.retrieval.hybrid import HybridRetriever
 
-        mock_embedder = MagicMock()
-        # Return mock embeddings
-        mock_embedder.embed_documents.return_value = [
-            [float(i)] * 384 for i in range(len(sample_chunks))
-        ]
-        mock_embedder.embed_query.return_value = [1.0] * 384
+        mock_dense = MagicMock()
+        mock_dense.retrieve.return_value = [(chunk, 0.8) for chunk in sample_chunks]
 
-        retriever = HybridRetriever(mock_settings, mock_embedder)
+        mock_sparse = MagicMock()
+        mock_sparse.retrieve.return_value = [(chunk, 0.5) for chunk in sample_chunks]
+        retriever = HybridRetriever(mock_settings, mock_dense, mock_sparse)
         retriever.build_index(sample_chunks)
 
         results = retriever.retrieve("What is Python?", top_k=3)
@@ -94,13 +95,12 @@ class TestHybridRetriever:
     def test_retrieve_with_scores_returns_tuples(self, mock_settings, sample_chunks):
         from src.retrieval.hybrid import HybridRetriever
 
-        mock_embedder = MagicMock()
-        mock_embedder.embed_documents.return_value = [
-            [float(i)] * 384 for i in range(len(sample_chunks))
-        ]
-        mock_embedder.embed_query.return_value = [1.0] * 384
+        mock_dense = MagicMock()
+        mock_dense.retrieve.return_value = [(chunk, 0.8) for chunk in sample_chunks]
 
-        retriever = HybridRetriever(mock_settings, mock_embedder)
+        mock_sparse = MagicMock()
+        mock_sparse.retrieve.return_value = [(chunk, 0.5) for chunk in sample_chunks]
+        retriever = HybridRetriever(mock_settings, mock_dense, mock_sparse)
         retriever.build_index(sample_chunks)
 
         results = retriever.retrieve_with_scores("test", top_k=2)
