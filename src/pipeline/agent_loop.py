@@ -18,28 +18,33 @@ class AgentLoop:
     def run(self, query: str, domain: str = "general") -> dict:
         self.budget_guard.check_budget()
         
+        domain = (domain or "general").lower().strip()
+        
         from src.domains import get_domain_adapter
         adapter = get_domain_adapter(domain)
         
-        # 1. Initial retrieval
-        retrieved_docs = self.query_pipeline.retriever.retrieve(query, top_k=self.settings.top_k_retrieve)
+        # 1. Initial retrieval with domain filter
+        retrieved_docs = self.query_pipeline.retriever.retrieve(
+            query, top_k=self.settings.top_k_retrieve, domain=domain
+        )
         
-        # Determine if retrieval is weak (e.g. low BM25/dense scores or empty)
-        # For simplicity, if we got few docs or we want to simulate agentic rewrite:
+        # Determine if retrieval is weak
         if not retrieved_docs or len(retrieved_docs) < 2:
             logger.info("Agent: Weak retrieval detected. Expanding query...")
-            # Simple rewrite strategy (in a real system, could call DuckDuckGo or LLM)
             expanded_query = f"{query} details context information"
             
-            # Retrieve again with expanded query
-            retrieved_docs = self.query_pipeline.retriever.retrieve(expanded_query, top_k=self.settings.top_k_retrieve)
+            # Retrieve again with expanded query, keeping domain filter
+            retrieved_docs = self.query_pipeline.retriever.retrieve(
+                expanded_query, top_k=self.settings.top_k_retrieve, domain=domain
+            )
             
         if not retrieved_docs:
             return {
-                "answer": "Even after agentic expansion, I don't have relevant information.",
+                "answer": f"Even after agentic expansion, I don't have relevant information for the '{domain}' domain. Please upload documents.",
                 "citations": [],
                 "usage": {"llm_calls": 0, "tokens": 0, "budget_remaining_calls": self.budget_guard.get_remaining()},
-                "mode": "agent"
+                "mode": "agent",
+                "domain": domain,
             }
             
         # 2. Rerank
@@ -59,5 +64,6 @@ class AgentLoop:
             "answer": gen_result["answer"],
             "citations": gen_result["citations"],
             "usage": usage,
-            "mode": "agent"
+            "mode": "agent",
+            "domain": domain,
         }

@@ -1,6 +1,6 @@
 """
 Dense retriever for PinnacleRAG-DS.
-Uses ChromaDB for vector search.
+Uses ChromaDB for vector search with domain-scoped filtering.
 """
 
 from typing import Optional
@@ -59,17 +59,23 @@ class DenseRetriever:
             )
         logger.info(f"Dense index built: {len(chunks)} vectors in ChromaDB")
 
-    def retrieve(self, query: str, top_k: int) -> list[tuple[Document, float]]:
+    def retrieve(self, query: str, top_k: int, domain: Optional[str] = None) -> list[tuple[Document, float]]:
         if self._collection.count() == 0:
             return []
 
         query_embedding = self.embedder.embed_query(query)
         actual_k = min(top_k, self._collection.count())
 
+        # Build where filter for domain-scoped retrieval
+        where_filter = None
+        if domain and domain.lower() not in ("general", "all", ""):
+            where_filter = {"domain": domain.lower()}
+
         results = self._collection.query(
             query_embeddings=[query_embedding],
             n_results=actual_k,
             include=["documents", "metadatas", "distances"],
+            where=where_filter,
         )
 
         docs_with_scores = []

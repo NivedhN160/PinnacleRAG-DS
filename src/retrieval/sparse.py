@@ -1,6 +1,6 @@
 """
 Sparse retriever for PinnacleRAG-DS.
-Uses BM25 for keyword search.
+Uses BM25 for keyword search with domain-scoped filtering.
 """
 
 import os
@@ -34,16 +34,27 @@ class SparseRetriever:
         self.save_index()
         logger.info(f"Sparse index built: BM25 with {len(chunks)} documents")
 
-    def retrieve(self, query: str, top_k: int) -> list[tuple[Document, float]]:
+    def retrieve(self, query: str, top_k: int, domain: Optional[str] = None) -> list[tuple[Document, float]]:
         if self._bm25 is None or not self._bm25_docs:
             return []
 
         tokenized_query = query.lower().split()
         scores = self._bm25.get_scores(tokenized_query)
-        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+        
+        # Filter by domain before ranking
+        valid_indices = list(range(len(scores)))
+        if domain and domain.lower() not in ("general", "all", ""):
+            valid_indices = [
+                i for i in valid_indices
+                if self._bm25_docs[i].metadata.get("domain", "general") == domain.lower()
+            ]
+        
+        top_indices = sorted(valid_indices, key=lambda i: scores[i], reverse=True)[:top_k]
 
         results = []
-        max_score = max(scores) if max(scores) > 0 else 1.0
+        max_score = max((scores[i] for i in valid_indices), default=1.0)
+        if max_score <= 0:
+            max_score = 1.0
         for idx in top_indices:
             if scores[idx] > 0:
                 normalized_score = scores[idx] / max_score

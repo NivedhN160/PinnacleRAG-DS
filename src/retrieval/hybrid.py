@@ -1,6 +1,7 @@
 """
 Hybrid retriever for PinnacleRAG-DS.
 Combines Dense and Sparse retrievers using Reciprocal Rank Fusion.
+Domain filtering is threaded through to both sub-retrievers.
 """
 
 from typing import Optional
@@ -25,16 +26,16 @@ class HybridRetriever:
         self.dense.build_index(chunks)
         self.sparse.build_index(chunks)
 
-    def retrieve(self, query: str, top_k: Optional[int] = None) -> list[Document]:
-        results = self.retrieve_with_scores(query, top_k)
+    def retrieve(self, query: str, top_k: Optional[int] = None, domain: Optional[str] = None) -> list[Document]:
+        results = self.retrieve_with_scores(query, top_k, domain=domain)
         return [doc for doc, _ in results]
 
-    def retrieve_with_scores(self, query: str, top_k: Optional[int] = None) -> list[tuple[Document, float]]:
+    def retrieve_with_scores(self, query: str, top_k: Optional[int] = None, domain: Optional[str] = None) -> list[tuple[Document, float]]:
         k = top_k or self.top_k
-        dense_results = self.dense.retrieve(query, k)
-        sparse_results = self.sparse.retrieve(query, k)
+        dense_results = self.dense.retrieve(query, k, domain=domain)
+        sparse_results = self.sparse.retrieve(query, k, domain=domain)
         fused = self._reciprocal_rank_fusion(dense_results, sparse_results, k)
-        logger.debug(f"Hybrid retrieval: {len(fused)} results for query: {query[:50]}...")
+        logger.debug(f"Hybrid retrieval: {len(fused)} results for query: {query[:50]}... (domain={domain})")
         return fused
 
     def _reciprocal_rank_fusion(

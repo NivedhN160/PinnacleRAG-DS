@@ -1,6 +1,6 @@
 """
 Query pipeline for PinnacleRAG-DS.
-budget -> hybrid -> rerank -> generate -> citations -> usage
+budget -> hybrid(domain) -> rerank -> generate -> citations -> usage
 """
 from config.settings import Settings
 from src.retrieval.hybrid import HybridRetriever
@@ -27,15 +27,19 @@ class QueryPipeline:
     def run(self, query: str, domain: str = "general") -> dict:
         self.budget_guard.check_budget()
         
+        domain = (domain or "general").lower().strip()
+        
         from src.domains import get_domain_adapter
         adapter = get_domain_adapter(domain)
         
-        # 1. Retrieve
-        retrieved_docs = self.retriever.retrieve(query, top_k=self.settings.top_k_retrieve)
+        # 1. Retrieve with domain filter
+        retrieved_docs = self.retriever.retrieve(
+            query, top_k=self.settings.top_k_retrieve, domain=domain
+        )
         
         if not retrieved_docs:
             return {
-                "answer": "I don't have any relevant information to answer this question. Please upload some documents.",
+                "answer": f"I don't have any relevant information for the '{domain}' domain to answer this question. Please upload some documents.",
                 "citations": [],
                 "usage": {"llm_calls": 0, "tokens": 0, "budget_remaining_calls": self.budget_guard.get_remaining()},
                 "mode": "simple"
@@ -59,5 +63,6 @@ class QueryPipeline:
             "answer": gen_result["answer"],
             "citations": gen_result["citations"],
             "usage": usage,
-            "mode": "simple"
+            "mode": "simple",
+            "domain": domain,
         }
