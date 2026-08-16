@@ -18,10 +18,6 @@ export default function Home() {
         <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-br from-white via-slate-200 to-slate-500">
           The Ultimate Hybrid RAG
         </h2>
-        
-        <p className="max-w-2xl text-lg md:text-xl text-slate-400 mb-12 leading-relaxed">
-          Powered by free, open-source models and specialized domain logic. Experience the Antigravity visualization layer bridging complex semantic data structures.
-        </p>
 
         {/* Domain Selection Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
