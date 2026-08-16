@@ -54,7 +54,7 @@ class TestHybridRetriever:
     """Tests for HybridRetriever (uses mocked embedder to avoid model download)."""
 
     def test_build_index_empty(self, mock_settings):
-        from src.retrieval.hybrid_retriever import HybridRetriever
+        from src.retrieval.hybrid import HybridRetriever
 
         mock_embedder = MagicMock()
         mock_embedder.embed_documents.return_value = []
@@ -65,7 +65,7 @@ class TestHybridRetriever:
         # Should not crash on empty input
 
     def test_retrieve_empty_index(self, mock_settings):
-        from src.retrieval.hybrid_retriever import HybridRetriever
+        from src.retrieval.hybrid import HybridRetriever
 
         mock_embedder = MagicMock()
         mock_embedder.embed_query.return_value = [0.1] * 384
@@ -76,7 +76,7 @@ class TestHybridRetriever:
         assert results == []
 
     def test_build_and_retrieve(self, mock_settings, sample_chunks):
-        from src.retrieval.hybrid_retriever import HybridRetriever
+        from src.retrieval.hybrid import HybridRetriever
 
         mock_embedder = MagicMock()
         # Return mock embeddings
@@ -92,7 +92,7 @@ class TestHybridRetriever:
         assert len(results) <= 3
 
     def test_retrieve_with_scores_returns_tuples(self, mock_settings, sample_chunks):
-        from src.retrieval.hybrid_retriever import HybridRetriever
+        from src.retrieval.hybrid import HybridRetriever
 
         mock_embedder = MagicMock()
         mock_embedder.embed_documents.return_value = [
