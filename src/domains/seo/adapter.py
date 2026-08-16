@@ -9,3 +9,6 @@ STRICT RULES:
 
     def get_example_questions(self) -> list[str]:
         return ["What are the keyword gaps?", "List the technical SEO issues found."]
+
+    def get_evaluation_focus(self) -> dict:
+        return {"relevancy": 1.0, "faithfulness": 1.0}

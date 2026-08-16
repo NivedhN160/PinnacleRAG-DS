@@ -4,7 +4,7 @@ from src.domains.seo.adapter import SEOAdapter
 from src.domains.base import BaseDomainAdapter
 
 def get_domain_adapter(domain: str) -> BaseDomainAdapter:
-    domain = domain.lower()
+    domain = (domain or "general").lower().strip()
     if domain == "trading":
         return TradingAdapter()
     elif domain == "security":

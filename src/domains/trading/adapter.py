@@ -17,3 +17,6 @@ STRICT RULES:
 
     def get_example_questions(self) -> list[str]:
         return ["What are the key 10-K risks mentioned?", "How did earnings change year-over-year?"]
+
+    def get_evaluation_focus(self) -> dict:
+        return {"faithfulness": 1.5, "relevancy": 1.0}

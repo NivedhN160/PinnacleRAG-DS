@@ -9,4 +9,7 @@ STRICT RULES:
 3. Use an incident response tone."""
 
     def get_example_questions(self) -> list[str]:
-        return ["What CVEs are listed?", "What is the recommended mitigation?"]
+        return ["What CVEs are listed?", "What is the recommended mitigation?", "What are the affected assets?"]
+
+    def get_evaluation_focus(self) -> dict:
+        return {"faithfulness": 1.0, "context_precision": 1.0}
