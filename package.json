@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "Free hybrid RAG webapp",
   "scripts": {
-    "start": "npx concurrently \"uvicorn app.main:app --reload --port 8000\" \"cd frontend && npm run dev\"",
+    "start": "concurrently \"uvicorn app.main:app --reload --port 8000\" \"cd frontend && npm run dev\"",
     "backend": "uvicorn app.main:app --reload --port 8000",
     "frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   },
   "keywords": [
     "rag",
