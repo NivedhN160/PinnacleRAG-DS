@@ -25,9 +25,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Exception handler to prevent stack traces
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error. Check server logs."}

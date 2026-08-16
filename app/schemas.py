@@ -26,6 +26,7 @@ class QueryResponse(BaseModel):
     citations: List[Citation]
     usage: Usage
     mode: str
+    domain: Optional[str] = None
 
 # --- Eval ---
 class EvalResult(BaseModel):
