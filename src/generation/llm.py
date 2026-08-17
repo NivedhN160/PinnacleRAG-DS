@@ -1,6 +1,6 @@
 """
 Groq LLM integration for PinnacleRAG-DS.
-Includes mocking support and budget guard integration.
+Includes budget guard integration and retry logic.
 """
 
 from typing import Optional
@@ -9,7 +9,7 @@ from groq import Groq
 from langchain_core.documents import Document
 
 from config.settings import Settings
-from src.generation.prompts import build_prompt
+from src.generation.prompts import build_prompt, QUERY_REWRITE_PROMPT, FAITHFULNESS_PROMPT
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -56,6 +56,26 @@ class GroqLLM:
                 "tokens": tokens_used
             }
         }
+
+    def rewrite_query(self, query: str) -> str:
+        messages = [
+            {"role": "user", "content": QUERY_REWRITE_PROMPT.format(query=query)}
+        ]
+        answer, _ = self._call_groq(messages)
+        return answer.strip()
+
+    def check_faithfulness(self, answer: str, context_docs: list[Document]) -> bool:
+        context_parts = []
+        for i, doc in enumerate(context_docs, start=1):
+            source = doc.metadata.get("source", "unknown")
+            context_parts.append(f"[Document {i} - {source}]\n{doc.page_content}")
+        context_text = "\n\n".join(context_parts)
+        
+        messages = [
+            {"role": "user", "content": FAITHFULNESS_PROMPT.format(context=context_text, answer=answer)}
+        ]
+        result, _ = self._call_groq(messages)
+        return "FAIL" not in result.upper()
 
     def _call_groq(self, messages: list[dict], max_retries: int = 3) -> tuple[str, int]:
         import time

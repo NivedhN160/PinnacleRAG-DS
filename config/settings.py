@@ -41,14 +41,18 @@ class Settings(BaseSettings):
         default=5,
         description="Budget guard: Max LLM calls per session",
     )
-    mock_if_no_key: bool = Field(
-        default=True,
-        description="Mock LLM response if API key is not present",
+    enable_query_rewrite: bool = Field(
+        default=False,
+        description="Rewrite query before retrieval if needed",
+    )
+    enable_faithfulness_check: bool = Field(
+        default=False,
+        description="Verify response faithfulness against context",
     )
 
     # ── Embedding Model ───────────────────────────────────────────────
     embedding_model_name: str = Field(
-        default="all-MiniLM-L6-v2",
+        default="BAAI/bge-small-en-v1.5",
         description="Sentence-transformers model for embeddings (free, local)",
     )
 

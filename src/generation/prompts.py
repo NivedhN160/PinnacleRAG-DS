@@ -18,6 +18,22 @@ STRICT RULES:
 
 Remember: Faithfulness to the source material is your #1 priority."""
 
+QUERY_REWRITE_PROMPT = """You are a query rewriting assistant for a search engine.
+Given the following user query, rewrite it to be more specific, clear, and optimized for retrieval.
+Return ONLY the rewritten query text, nothing else.
+
+Original query: {query}"""
+
+FAITHFULNESS_PROMPT = """You are a hallucination detection assistant.
+Given a list of context documents and an AI generated answer, determine if the answer is completely faithful to the context (i.e. contains no hallucinations).
+Return ONLY 'PASS' if the answer is completely grounded, or 'FAIL' if there is any ungrounded claim.
+
+CONTEXT:
+{context}
+
+ANSWER:
+{answer}"""
+
 def build_prompt(query: str, context_docs: list[Document], system_prompt: str = None) -> list[dict]:
     """
     Build the chat messages with strict grounding instructions.

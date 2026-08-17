@@ -9,6 +9,8 @@ class QueryRequest(BaseModel):
     question: str
     mode: str = Field(default="simple", description="'simple' or 'agent'")
     domain: str = Field(default="general", description="Domain logic (general, trading, security, seo)")
+    rewrite: bool = Field(default=False, description="Rewrite query before retrieval")
+    check_faithfulness: bool = Field(default=False, description="Verify answer against context")
 
 class Citation(BaseModel):
     id: int
@@ -27,6 +29,7 @@ class QueryResponse(BaseModel):
     usage: Usage
     mode: str
     domain: Optional[str] = None
+    rewritten_query: Optional[str] = None
 
 # --- Eval ---
 class EvalResult(BaseModel):

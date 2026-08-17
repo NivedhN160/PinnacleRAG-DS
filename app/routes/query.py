@@ -20,7 +20,12 @@ async def query_endpoint(request: QueryRequest):
         if request.mode == "agent":
             result = agent_loop.run(request.question, domain=domain)
         else:
-            result = query_pipeline.run(request.question, domain=domain)
+            result = query_pipeline.run(
+                request.question, 
+                domain=domain,
+                rewrite=request.rewrite,
+                check_faithfulness=request.check_faithfulness
+            )
             
         return result
     except HTTPException as e:

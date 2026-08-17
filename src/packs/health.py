@@ -28,12 +28,9 @@ class HealthPack:
         # 3. Optional structured extraction via LLM
         prompt = "Extract health lab tests from this text into JSON format: " + text[:2000]
         # In a real app we would force JSON output from Groq
-        if not self.llm.is_mock:
-            explanation = "Extraction logic would go here."
-            structured = {"tests": [{"name": "Hb", "value": "14", "status": "normal"}]}
-        else:
-            explanation = "Mock explanation."
-            structured = {"tests": [{"name": "Hb", "value": "14", "status": "normal"}]}
+        # But this is not implemented yet
+        explanation = "Real extraction logic goes here."
+        structured = {}
             
         return {
             "structured": structured,

@@ -14,6 +14,7 @@ interface Message {
   role: string;
   content: string;
   citations?: Citation[];
+  rewritten_query?: string;
 }
 
 function ChatInterface() {
@@ -24,6 +25,11 @@ function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Feature toggles
+  const [rewrite, setRewrite] = useState(false);
+  const [checkFaithfulness, setCheckFaithfulness] = useState(false);
+  const [budgetRemaining, setBudgetRemaining] = useState<number | null>(null);
   
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
   
@@ -58,13 +64,27 @@ function ChatInterface() {
       const res = await fetch(`${apiUrl}/api/query/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: userMessage.content, mode: 'agent', domain })
+        body: JSON.stringify({ 
+          question: userMessage.content, 
+          mode: 'agent', 
+          domain,
+          rewrite: rewrite,
+          check_faithfulness: checkFaithfulness
+        })
       });
       
       if (!res.ok) throw new Error('Failed to fetch response');
       
       const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.answer, citations: data.citations }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.answer, 
+        citations: data.citations,
+        rewritten_query: data.rewritten_query
+      }]);
+      if (data.usage?.budget_remaining_calls !== undefined) {
+        setBudgetRemaining(data.usage.budget_remaining_calls);
+      }
     } catch (error) {
       setMessages(prev => [...prev, { role: 'system', content: 'Error communicating with the backend. Is uvicorn running on port 8000?' }]);
     } finally {
@@ -152,7 +172,12 @@ function ChatInterface() {
             ))}
           </div>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          {budgetRemaining !== null && (
+            <span className="text-xs font-semibold text-slate-400 bg-slate-800 px-2 py-1 rounded">
+              Budget: {budgetRemaining} left
+            </span>
+          )}
           <button 
             onClick={() => setShowUpload(!showUpload)}
             className="px-4 py-2 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors text-sm font-medium border border-indigo-500/30"
@@ -240,6 +265,11 @@ function ChatInterface() {
                   ? 'bg-red-500/20 text-red-200 border border-red-500/30'
                   : 'bg-slate-800/80 backdrop-blur-sm border border-slate-700 text-slate-200 rounded-tl-sm'
             }`}>
+              {msg.rewritten_query && (
+                <div className="text-xs text-indigo-300 mb-2 font-medium italic">
+                  Rewritten Query: {msg.rewritten_query}
+                </div>
+              )}
               <div className="whitespace-pre-wrap">{msg.content}</div>
               
               {/* Citations block */}
@@ -271,9 +301,28 @@ function ChatInterface() {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* Input Area */}
-      <footer className="relative z-10 p-4 bg-slate-900/80 backdrop-blur-lg border-t border-slate-800">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-3">
+      <footer className="relative z-10 p-4 bg-slate-900/80 backdrop-blur-lg border-t border-slate-800 flex flex-col items-center">
+        <div className="max-w-4xl w-full flex justify-end gap-4 mb-3 px-2">
+          <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer hover:text-slate-200 transition-colors">
+            <input 
+              type="checkbox" 
+              checked={rewrite} 
+              onChange={e => setRewrite(e.target.checked)}
+              className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500/50"
+            />
+            Rewrite Query
+          </label>
+          <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer hover:text-slate-200 transition-colors">
+            <input 
+              type="checkbox" 
+              checked={checkFaithfulness} 
+              onChange={e => setCheckFaithfulness(e.target.checked)}
+              className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500/50"
+            />
+            Check Faithfulness
+          </label>
+        </div>
+        <form onSubmit={handleSubmit} className="max-w-4xl w-full flex gap-3">
           <input 
             type="text" 
             value={input}

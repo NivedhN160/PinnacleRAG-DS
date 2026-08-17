@@ -24,13 +24,17 @@ class QueryPipeline:
         self.reranker = CrossEncoderReranker(settings)
         self.llm = GroqLLM(settings)
 
-    def run(self, query: str, domain: str = "general") -> dict:
+    def run(self, query: str, domain: str = "general", rewrite: bool = False, check_faithfulness: bool = False) -> dict:
         self.budget_guard.check_budget()
         
         domain = (domain or "general").lower().strip()
         
         from src.domains import get_domain_adapter
         adapter = get_domain_adapter(domain)
+        
+        if rewrite or getattr(self.settings, "enable_query_rewrite", False):
+            query = self.llm.rewrite_query(query)
+            self.budget_guard.record_call()
         
         # 1. Retrieve with domain filter
         retrieved_docs = self.retriever.retrieve(
@@ -42,7 +46,8 @@ class QueryPipeline:
                 "answer": f"I don't have any relevant information for the '{domain}' domain to answer this question. Please upload some documents.",
                 "citations": [],
                 "usage": {"llm_calls": 0, "tokens": 0, "budget_remaining_calls": self.budget_guard.get_remaining()},
-                "mode": "simple"
+                "mode": "simple",
+                "domain": domain,
             }
             
         # 2. Rerank
@@ -55,14 +60,26 @@ class QueryPipeline:
         answer = adapter.post_process_answer(gen_result["answer"], reranked)
         gen_result["answer"] = answer
         
+        if check_faithfulness or getattr(self.settings, "enable_faithfulness_check", False):
+            is_faithful = self.llm.check_faithfulness(answer, reranked)
+            self.budget_guard.record_call()
+            if not is_faithful:
+                gen_result["answer"] += "\n\n[Warning: The faithfulness check determined that part of this answer might not be fully supported by the provided context.]"
+                gen_result["faithfulness_warning"] = True
+        
         # Add budget remaining to usage
         usage = gen_result["usage"]
         usage["budget_remaining_calls"] = self.budget_guard.get_remaining()
         
-        return {
+        response = {
             "answer": gen_result["answer"],
             "citations": gen_result["citations"],
             "usage": usage,
             "mode": "simple",
             "domain": domain,
         }
+        
+        if rewrite or getattr(self.settings, "enable_query_rewrite", False):
+            response["rewritten_query"] = query
+            
+        return response
