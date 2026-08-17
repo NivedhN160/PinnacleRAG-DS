@@ -1,7 +1,22 @@
 [
   {
     "question": "What is PinnacleRAG-DS?",
-    "ground_truth": "PinnacleRAG-DS is a production-grade RAG system with hybrid retrieval, cross-encoder reranking, and RAGAS evaluation.",
+    "ground_truth": "PinnacleRAG-DS is a production-grade RAG system with hybrid retrieval, cross-encoder reranking, and domain-specific routing.",
     "domain": "general"
+  },
+  {
+    "question": "What is the PE ratio of Apple?",
+    "ground_truth": "The PE ratio of Apple can be determined by dividing its market price per share by its earnings per share. (Requires Apple financial data context).",
+    "domain": "trading"
+  },
+  {
+    "question": "What are the mitigation steps for Log4Shell?",
+    "ground_truth": "Log4Shell can be mitigated by updating Log4j to version 2.15.0 or later, or by setting the system property log4j2.formatMsgNoLookups to true.",
+    "domain": "security"
+  },
+  {
+    "question": "How can I improve my core web vitals?",
+    "ground_truth": "Improving core web vitals involves optimizing LCP (Largest Contentful Paint), FID (First Input Delay), and CLS (Cumulative Layout Shift) by compressing images, deferring offscreen images, and minifying CSS/JS.",
+    "domain": "seo"
   }
 ]

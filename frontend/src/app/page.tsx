@@ -51,6 +51,14 @@ export default function Home() {
             </div>
           </Link>
         </div>
+        
+        {/* Eval Link */}
+        <div className="mt-12">
+          <Link href="/eval" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+            Golden Set Evaluation Dashboard
+          </Link>
+        </div>
 
       </div>
     </main>

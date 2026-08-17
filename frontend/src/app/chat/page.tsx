@@ -252,7 +252,33 @@ function ChatInterface() {
         {messages.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
             <h2 className="text-3xl font-semibold mb-2">Agent is Ready</h2>
-            <p className="max-w-md">Ask a question to test the {domain} domain specialization. It will ground its answers on documents retrieved from your local index.</p>
+            <p className="max-w-md mb-6">Ask a question to test the {domain} domain specialization. It will ground its answers on documents retrieved from your local index.</p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-lg">
+              {domain === 'trading' && [
+                "What is the PE ratio of Apple?",
+                "Analyze the recent FED rate hike impact on tech stocks."
+              ].map(q => (
+                <button key={q} onClick={() => setInput(q)} className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-full transition-colors border border-slate-700">{q}</button>
+              ))}
+              {domain === 'security' && [
+                "What are the mitigation steps for Log4Shell?",
+                "Explain the zero trust architecture."
+              ].map(q => (
+                <button key={q} onClick={() => setInput(q)} className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-full transition-colors border border-slate-700">{q}</button>
+              ))}
+              {domain === 'seo' && [
+                "How can I improve my core web vitals?",
+                "What is the impact of canonical tags?"
+              ].map(q => (
+                <button key={q} onClick={() => setInput(q)} className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-full transition-colors border border-slate-700">{q}</button>
+              ))}
+              {domain === 'general' && [
+                "Summarize the main points of the uploaded document.",
+                "What are the key takeaways?"
+              ].map(q => (
+                <button key={q} onClick={() => setInput(q)} className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-full transition-colors border border-slate-700">{q}</button>
+              ))}
+            </div>
           </div>
         )}
         
